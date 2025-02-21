@@ -149,6 +149,7 @@ def main(video_file, csv_reader, csv_writer):
             for (x1, y1, x2, y2), conf, c_id in zip(final_boxes, anno_conf, anno_class_ids):
                 w, h = x2 - x1, y2 - y1
                 deep_sort_detections.append(([x1, y1, w, h], conf, c_id))
+            print('deep_sort_detections', deep_sort_detections)
 
             ds_tracks = deep_sort.update_tracks(deep_sort_detections, frame=frame)
 
@@ -238,7 +239,7 @@ def prepare_csv_writer(csv_path):
 
 
 if __name__ == '__main__':
-    video_name = Path('REC_yolov8n_test_cut.mp4')
+    video_name = Path('office_camera_test.mp4')
     source_path = Path('../data/videos/')
     video_file = source_path / video_name
 
@@ -246,8 +247,8 @@ if __name__ == '__main__':
 
     # sys.exit()
     try:
-        # csv_writer_file, csv_writer = prepare_csv_writer(source_path / f'{video_name.stem}_dsed.csv')
-        # main(video_file, csv_reader, csv_writer)
+        csv_writer_file, csv_writer = prepare_csv_writer(source_path / f'{video_name.stem}_dsed.csv')
+        main(video_file, csv_reader, csv_writer)
     except Exception as e:
         print('Exception during video showing: ', e)
         traceback.print_exc()
