@@ -67,9 +67,20 @@ new_class_map = {
     'vehicle registration plate': 10,
 }
 
+color = sv.ColorPalette.DEFAULT
+color.colors[0] = Color(r=11, g=110, b=32)
 
-box_annotator = sv.BoxCornerAnnotator(thickness=2)
-label_annotator = sv.LabelAnnotator(text_scale=0.5, text_thickness=2)
+# for idx, _ in enumerate(color.colors):
+#     color.colors[idx] = Color(r=0, g=255, b=0)
+
+
+box_annotator = sv.BoxCornerAnnotator(thickness=2, color=color)
+label_annotator = sv.LabelAnnotator(text_scale=0.5, text_thickness=2, color=color)
+
+
+
+fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+out = cv2.VideoWriter('yury_ai.mp4', fourcc, 20.0, (1280, 720))
 
 
 def main(video_file, csv_reader, space_controll=False, jump_to_frame=0, conf_threshold=0.4, draw_ids=True):
@@ -102,11 +113,30 @@ def main(video_file, csv_reader, space_controll=False, jump_to_frame=0, conf_thr
             xyxy_data = json.loads(row[3])
 
             try:
-                class_ids, class_names, confidences, xyxy = zip(
-                    *((classNames.index(cls), cls, conf, xy) for cls, conf, xy in zip(class_data, confidences_data, xyxy_data) if
-                        cls in allowed_classes and conf > conf_threshold))
+                # print(class_data, confidences_data, xyxy_data)
+                if draw_ids:
+                    dsids = json.loads(row[4])
+                    class_ids, class_names, confidences, xyxy = zip(
+                        *((classNames.index(cls), f"{cls} #{dsid}", conf, xy) for cls, conf, xy, dsid in zip(class_data, confidences_data, xyxy_data, dsids) if
+                          cls in allowed_classes and conf > conf_threshold and dsid not in [0, 207]))
+                else:
+                    class_ids, class_names, confidences, xyxy = zip(
+                        *((classNames.index(cls), cls, conf, xy) for cls, conf, xy in zip(class_data, confidences_data, xyxy_data) if
+                          cls in allowed_classes and conf > conf_threshold))
 
                 labels = [f"{class_name}" for class_name in class_names]
+                labbels = []
+                colors = []
+                for lb in labels:
+                    if lb == 'person #1':
+                        labbels.append('Yury')
+                        colors.append(sv.Color(r=0, g=255, b=0))
+                    else:
+                        labbels.append(lb)
+                        colors.append(sv.Color(r=255, g=0, b=255))
+                colors = ColorPalette(np.array(colors))
+                labels = labbels
+                print(labels)
 
                 # dsid_data = json.loads(row[4])
                 # class_ids = []
@@ -140,14 +170,16 @@ def main(video_file, csv_reader, space_controll=False, jump_to_frame=0, conf_thr
                 frame = label_annotator.annotate(scene=frame, detections=detections, labels=labels)
 
         print('frame_id', frame_id)
-        cv2.imshow('frame', frame)
 
-        if space_controll:
-            if cv2.waitKey(0) == ord('q'):  # Exit on 'q'
-                break
-        else:
-            if cv2.waitKey(1) == ord('q'):  # Exit on 'q'
-                break
+        out.write(frame)
+
+        # cv2.imshow('frame', frame)
+        # if space_controll:
+        #     if cv2.waitKey(0) == ord('q'):  # Exit on 'q'
+        #         break
+        # else:
+        #     if cv2.waitKey(1) == ord('q'):  # Exit on 'q'
+        #         break
         frame_id += 1
 
 
@@ -161,7 +193,7 @@ def prepare_csv_reader(csv_path):
 if __name__ == "__main__":
     jump_to_frame = 0
     video_name = Path('REC_yolov8n_test_cut.mp4')
-    source_path = Path('./videos/')
+    source_path = Path('../data/videos/')
     video_file = source_path / video_name
     csv_file, csv_reader = prepare_csv_reader(source_path / (video_name.stem + '.csv'))
 

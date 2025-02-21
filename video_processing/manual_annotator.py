@@ -529,7 +529,7 @@ class DispatchDemoAnnotator:
 
 if __name__ == "__main__":
     video_name = Path('demo_3.mp4')
-    source_path = Path('./videos/')
+    source_path = Path('../data/videos/')
     # source_path = Path('/app/video_streaming_demo_1/videos/')
 
     dda = DispatchDemoAnnotator(video_name,
