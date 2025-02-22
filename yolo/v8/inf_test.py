@@ -35,6 +35,13 @@ model = YOLO(model_path)
  77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'}
 
 
+# fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+# out = cv2.VideoWriter('sheep_in_car.mp4', fourcc, 30.0, (464, 848))
+
+
+allowded_classes = [0, 2, 18]
+
+
 def main(video_file):
     cap = cv2.VideoCapture(str(video_file))
 
@@ -46,10 +53,12 @@ def main(video_file):
             print('End of video')
             break
 
-        results = model.track(frame, classes=[0, 2], persist=True)
+        results = model.track(frame, classes=allowded_classes, persist=True)
         annotated_frame = results[0].plot()
-        annotated_frame = cv2.resize(annotated_frame, (1920, 1080))
+        # annotated_frame = cv2.resize(annotated_frame, (1920, 1080))
         cv2.imshow("Frame", annotated_frame)
+
+        # out.write(annotated_frame)
 
         if cv2.waitKey(1) == ord('q'):  # Exit on 'q'
             break
@@ -57,7 +66,7 @@ def main(video_file):
 
 
 if __name__ == "__main__":
-    video_name = Path('office_camera_test.mp4')
+    video_name = Path('sheep_in_car.mp4')
     source_path = Path('../../data/videos/')
     video_file = source_path / video_name
 
@@ -66,3 +75,8 @@ if __name__ == "__main__":
     except Exception as e:
         print('Exception during video showing: ', e)
         traceback.print_exc()
+    finally:
+        try:
+            out.release()
+        except Exception:
+            pass
