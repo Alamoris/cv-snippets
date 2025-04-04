@@ -1,0 +1,35 @@
+
+services:
+  fastapi:
+    build:
+      context: .
+    ports:
+      - 8090:8000
+      - 8554:8554
+    environment:
+      - DISPLAY=$DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/.Xauthority:/root/.Xauthority
+      - ./app:/app
+      - ../video_receiver.py:/video_receiver.py
+      - ../../data/videos:/videos
+    stdin_open: true
+    tty: true
+    # entrypoint: fastapi run test_app.py --port 8000
+    entrypoint: /bin/bash
+
+
+networks:
+  default:
+    name: cloud-net
+    external: true
+  macvlan_network:
+    driver: macvlan
+    driver_opts:
+      parent: eno2  # Phisical interface to mount. In this example eth over usb from micohard
+    ipam:
+      driver: default
+      config:
+       - subnet: 192.168.168.0/24
+         gateway: 192.168.168.1

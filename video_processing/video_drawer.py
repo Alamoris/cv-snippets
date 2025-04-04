@@ -100,13 +100,15 @@ def main(video_file, csv_reader, space_controll=False, jump_to_frame=0, conf_thr
         if class_data:
             confidences_data = json.loads(row[2])
             xyxy_data = json.loads(row[3])
+            ds_ids = json.loads(row[4])
+            bt_ids = json.loads(row[5])
 
             try:
-                class_ids, class_names, confidences, xyxy = zip(
-                    *((classNames.index(cls), cls, conf, xy) for cls, conf, xy in zip(class_data, confidences_data, xyxy_data) if
+                class_ids, class_names, confidences, xyxy, dsids, btids = zip(
+                    *((classNames.index(cls), cls, conf, xy, dsid, btid) for cls, conf, xy, dsid, btid in zip(class_data, confidences_data, xyxy_data, ds_ids, bt_ids) if
                         cls in allowed_classes and conf > conf_threshold))
 
-                labels = [f"{class_name}" for class_name in class_names]
+                labels = [f"{class_name} #{id}" for class_name, id in zip(class_names, dsids)]
 
                 # dsid_data = json.loads(row[4])
                 # class_ids = []
@@ -140,6 +142,7 @@ def main(video_file, csv_reader, space_controll=False, jump_to_frame=0, conf_thr
                 frame = label_annotator.annotate(scene=frame, detections=detections, labels=labels)
 
         print('frame_id', frame_id)
+        frame = cv2.resize(frame, (round(frame.shape[1] / 1.5), round(frame.shape[0] / 1.5)))
         cv2.imshow('frame', frame)
 
         if space_controll:
@@ -160,8 +163,8 @@ def prepare_csv_reader(csv_path):
 
 if __name__ == "__main__":
     jump_to_frame = 0
-    video_name = Path('REC_yolov8n_test_cut.mp4')
     source_path = Path('../data/videos/')
+    video_name = Path('DJI_0174.MP4')
     video_file = source_path / video_name
     csv_file, csv_reader = prepare_csv_reader(source_path / (video_name.stem + '.csv'))
 

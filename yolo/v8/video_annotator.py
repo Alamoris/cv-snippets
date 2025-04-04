@@ -104,7 +104,7 @@ def process_video(video_path, csv_writer):
             print(f"End of video file or error reading file: {video_path}")
             break
 
-        results = model(img, stream=True)
+        results = model.track(img, stream=True)
         # results = model(img)
 
         res = {

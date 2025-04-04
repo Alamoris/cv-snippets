@@ -113,8 +113,8 @@ def main(video_file, csv_reader, csv_writer):
     cap = cv2.VideoCapture(str(video_file))
     frame_id = 0
 
-    print('number of frames', cap.get(cv2.CAP_PROP_FRAME_COUNT), cap.get(cv2.CAP_PROP_FPS))
-
+    n_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    print('number of frames', n_frames, cap.get(cv2.CAP_PROP_FPS))
 
     while True:
         ret, frame = cap.read()
@@ -129,10 +129,11 @@ def main(video_file, csv_reader, csv_writer):
         if not anno_conf:
             anno_conf = np.zeros(len(json.loads(row[1])))
         final_boxes = json.loads(row[3])
+        bs_ids = json.loads(row[5])
 
         try:
-            anno_class_names, anno_class_ids, anno_conf, final_boxes = zip(
-                *((cls, class_map[cls], conf, xy) for cls, conf, xy in zip(anno_class_names, anno_conf, final_boxes) if
+            anno_class_names, anno_class_ids, anno_conf, final_boxes, bsids = zip(
+                *((cls, class_map[cls], conf, xy, bs_id) for cls, conf, xy, bs_id in zip(anno_class_names, anno_conf, final_boxes, bs_ids) if
                     cls in allowded_classes))
         except Exception:
             anno_class_names = []
@@ -210,10 +211,13 @@ def main(video_file, csv_reader, csv_writer):
             'classes': json.dumps(anno_class_names),
             'confidences': json.dumps(anno_conf),
             'box_coords': json.dumps(final_boxes),
-            'bytetrack_ids': json.dumps(matched_ds_ids),
+            'bytetrack_ids': json.dumps(bsids),
+            'deep_sort_ids': json.dumps(matched_ds_ids),
         }
         csv_writer.writerow(res)
         frame_id += 1
+        print(f'Frame: {frame_id}/{n_frames}')
+
 
         # cv2.imshow('frame', frame)
         # if cv2.waitKey(0) == ord('q'):
@@ -230,7 +234,7 @@ def prepare_csv_reader(csv_path):
 
 
 def prepare_csv_writer(csv_path):
-    fieldnames = ['frame_id', 'classes', 'confidences', 'box_coords', 'bytetrack_ids']
+    fieldnames = ['frame_id', 'classes', 'confidences', 'box_coords', 'deep_sort_ids', 'bytetrack_ids']
 
     csv_writer_file = open(csv_path, 'w', newline='')
     csv_writer = csv.DictWriter(csv_writer_file, fieldnames=fieldnames)
@@ -239,7 +243,7 @@ def prepare_csv_writer(csv_path):
 
 
 if __name__ == '__main__':
-    video_name = Path('office_camera_test.mp4')
+    video_name = Path('DJI_0173.MP4')
     source_path = Path('../data/videos/')
     video_file = source_path / video_name
 
