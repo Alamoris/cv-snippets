@@ -6,6 +6,18 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GstRtspServer, GObject
 
 
+# import supervision as sv
+from ultralytics import YOLO
+
+
+# box_annotator = sv.BoxCornerAnnotator(thickness=2)
+# label_annotator = sv.LabelAnnotator(text_scale=0.5, text_thickness=2)
+
+
+model_path = "/data/weights/yolo11m.pt"
+model = YOLO(model_path)
+
+
 cap = cv2.VideoCapture("rtspsrc location=rtsp://192.168.168.25:8554/main.264 latency=0 ! rtph265depay ! avdec_h265 ! videoconvert ! appsink drop=1", cv2.CAP_GSTREAMER)
 
 loop = GObject.MainLoop()
@@ -35,7 +47,10 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
         if self.cap.isOpened():
             ret, frame = self.cap.read()
             if ret:
-                data = frame.tostring()
+                results = model.track(frame, persist=True)
+                annotated_frame = results[0].plot()
+
+                data = annotated_frame.tostring()
                 buf = Gst.Buffer.new_allocate(None, len(data), None)
                 buf.fill(0, data)
                 buf.duration = self.duration

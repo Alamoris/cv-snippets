@@ -1,5 +1,6 @@
 import json
 import csv
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +13,7 @@ import supervision as sv
 # Model
 # model_path = "../WALDO-master/WALDO30_yolov8n_640x640.pt"
 # model_path = "../WALDO-master/yolov8n.pt"
-model_path = "../WALDO-master/yolov8m-worldv2.pt"
+model_path = "../../data/weights/yolov8m-worldv2.pt"
 model = YOLO(model_path)
 
 
@@ -92,6 +93,8 @@ def draw_image(image, classes, confidences, box_coords):
 def process_video(video_path, csv_writer):
     cap = cv2.VideoCapture(str(video_path))
 
+    n_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+
     frame_id = 0
 
     while True:
@@ -112,6 +115,7 @@ def process_video(video_path, csv_writer):
             'classes': [],
             'confidences': [],
             'box_coords': [],
+            'bytetrack_ids': [],
         }
         for r in results:
             boxes = r.boxes
@@ -121,6 +125,7 @@ def process_video(video_path, csv_writer):
                 res['classes'].append(classNames[int(box.cls[0])])
                 res['confidences'].append(round(float(box.conf[0]), 2))
                 res['box_coords'].append([int(x1), int(y1), int(x2), int(y2)])
+                res['bytetrack_ids'].append(int(box.id) if box.id else -1)
 
         # frame = draw_image(frame, res['classes'], res['confidences'], res['box_coords'])
         # frame = cv2.resize(frame, (int(frame.shape[1] / 1.5), int(frame.shape[0] / 1.5)))
@@ -132,10 +137,13 @@ def process_video(video_path, csv_writer):
         res['classes'] = json.dumps(res['classes'])
         res['confidences'] = json.dumps(res['confidences'])
         res['box_coords'] = json.dumps(res['box_coords'])
+        res['bytetrack_ids'] = json.dumps(res['bytetrack_ids'])
+
         csv_writer.writerow(res)
         csv_file.flush()
 
         frame_id += 1
+        print(f'Frame: {frame_id}/{n_frames}')
 
     cap.release()
 
@@ -157,8 +165,8 @@ def prepare_csv(csv_file_name):
 
 
 if __name__ == "__main__":
-    source_path = Path('./videos/')
-    video_file = source_path / 'REC_yolov8n_test.mp4'
+    source_path = Path('../../data/videos/')
+    video_file = source_path / 'DJI_0173.MP4'
 
     csv_file, csv_writer = prepare_csv(source_path / (video_file.stem + '.csv'))
 
@@ -166,6 +174,7 @@ if __name__ == "__main__":
         process_video(video_file, csv_writer)
     except Exception as e:
         print(e)
+        traceback.print_exc()
     finally:
         csv_file.close()
 

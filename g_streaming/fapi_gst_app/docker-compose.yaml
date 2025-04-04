@@ -8,16 +8,24 @@ services:
       - 8554:8554
     environment:
       - DISPLAY=$DISPLAY
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ~/.Xauthority:/root/.Xauthority
       - ./app:/app
       - ../video_receiver.py:/video_receiver.py
-      - ../../data/videos:/videos
+      - ../../data:/data
     stdin_open: true
     tty: true
-    # entrypoint: fastapi run test_app.py --port 8000
-    entrypoint: /bin/bash
+    entrypoint: python3 /app/gst_rtsp_processor.py
+    # entrypoint: /bin/bash
 
 
 networks:

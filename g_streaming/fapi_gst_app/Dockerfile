@@ -86,11 +86,16 @@ RUN apt-get update && \
 
 COPY --from=opencv-builder /opencv /opencv
 
+WORKDIR /opencv/build
+
 RUN make install && \
     rm -rf /opencv
 
-WORKDIR /app
+RUN pip3 install ultralytics && \
+    pip3 uninstall opencv-python -y && \
+    rm -rf /var/lib/apt/lists/*
 
+WORKDIR /app
 
 
 # COPY ./app /requirements.txt
